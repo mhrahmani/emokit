@@ -1,2 +1,2 @@
-gevent
-pycrypto
+pycrypto==2.6.1
+future

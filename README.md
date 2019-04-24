@@ -12,6 +12,12 @@ Contributions by
 * Sharif Olorin  (http://github.com/fractalcat) - hidapi support
 * Bill Schumacher (http://github.com/bschumacher) - Fixed the Python library
 
+Headset Support
+===============
+
+Supported: Epoc, Epoc+(Pre-2016, limited gyro sensors)
+Unsupported: Epoc+(2016+), other models.
+
 Description
 ===========
 
@@ -20,8 +26,14 @@ data from the Emotiv EPOC headset. Note that this will not give you
 processed data (i.e. anything available in the Emo Suites in the
 software), just the raw sensor data.
 
-The C library is backed by hidapi, and should work on any platform
-that hidapi also works on.
+C Library
+=========
+
+Please note that the python and C libraries are now in different
+repos. If you would like to use the C version of emokit, the repo
+is at
+
+http://www.github.com/openyou/emokit-c
 
 Information
 ===========
@@ -46,58 +58,72 @@ Required Libraries
 Python
 ------
 
-* pywinhid (Windows Only) - https://pypi.python.org/pypi/pywinusb/
-* (OS X) HIDAPI - http://www.signal11.us/oss/hidapi/
-* (OS X) cython-hidapi - https://github.com/gbishop/cython-hidapi
 * pycrypto - https://www.dlitz.net/software/pycrypto/
-* gevent - http://gevent.org
-* realpath - http://?   sudo apt-get install realpath
 
-C Language
-----------
+2.x
+* future - pip install future
+  
+Windows
+* pywinusb - https://pypi.python.org/pypi/pywinusb/
 
-* CMake - http://www.cmake.org
-* libmcrypt - https://sourceforge.net/projects/mcrypt/
+Linux / OS X
 * hidapi - http://www.signal11.us/oss/hidapi/
+* pyhidapi - https://github.com/NF6X/pyhidapi
+
+Running tests
+* pytest - http://doc.pytest.org/en/latest/
+
+You should be able to install emokit and the required python libraries using:  
+
+pip install emokit
+
+OR
+
+python setup.py install
+
+hidapi will still need to be installed manually on Linux and OS X.
+
 
 Usage
 =====
-
-C library
----------
-
-See emokitd.c example
 
 Python library
 --------------
 
   Code:
-  
-    import emotiv
-    import platform
-    if platform.system() == "Windows":
-        import socket
-    import gevent
+
+    # -*- coding: utf-8 -*-
+    # This is an example of popping a packet from the Emotiv class's packet queue
+
+
+    import time
+
+    from emokit.emotiv import Emotiv
 
     if __name__ == "__main__":
-      headset = emotiv.Emotiv()    
-      gevent.spawn(headset.setup)
-      gevent.sleep(0)
-      try:
-        while True:
-          packet = headset.dequeue()
-          print packet.gyro_x, packet.gyro_y
-          gevent.sleep(0)
-      except KeyboardInterrupt:
-        headset.close()
-      finally:
-        headset.close()
+        with Emotiv(display_output=True, verbose=True) as headset:
+            while True:
+                packet = headset.dequeue()
+                if packet is not None:
+                   pass
+                time.sleep(0.001)
 
 
 Bindings
 ========
 
 Go: https://github.com/fractalcat/emogo
+
+
+Running Unit Tests
+==================
+
+From the python directory in your terminal type:
+
+  Code:  
+
+    python -m pytest tests/
+      
 
 Platform Specifics Issues
 =========================
@@ -111,17 +137,14 @@ for each. We've tried to cover both (as based on hidapi's example udev
 file), but your mileage may vary. If you have problems, please post
 them to the github issues page (http://github.com/openyou/emokit/issues).
 
-Your kernel may not support /dev/hidraw devices by default, such as an RPi. 
+Your kernel may not support /dev/hidraw devices by default, such as an RPi.
 To fix that re-comiple your kernel with /dev/hidraw support
 
 OS X
 ----
-Recent OS versions no longer allow usb devices to become unclaimed by the kernel.
-You must use a HIDAPI library.
 
 The render.py file uses pygame, visit http://pygame.org/wiki/MacCompile
 Do not export the architecture compiler flags for recent 64bit versions of OS X.
-
 
 Credits - Cody
 ==============
@@ -152,4 +175,35 @@ Suites? Saddest hotel EVER.
  One least-significant-bit of the fourteen-bit value you get back is
  0.51 microvolts. See the
  [specification](http://emotiv.com/upload/manual/EPOCSpecifications.pdf)
- for more details.
+ for more details. (Broken Link)
+ 
+ - *What should my output look like?*
+ 
+ Idling, not on someone's head it should look something like this:  
+
+Emokit - v0.0.8 SN: ActualSerialNumberHere  Old Model: False
++========================================================+
+| Sensor |   Value  | Quality  | Quality L1 | Quality L2 |
++--------+----------+----------+------------+------------+
+|   F3   |   292    |    24    |  Nothing   |  Nothing   |
+|   FC5  |   1069   |    0     |  Nothing   |  Nothing   |
+|   AF3  |   110    |    8     |  Nothing   |  Nothing   |
+|   F7   |    63    |    24    |  Nothing   |  Nothing   |
+|   T7   |   322    |    8     |  Nothing   |  Nothing   |
+|   P7   |   166    |    0     |  Nothing   |  Nothing   |
+|   O1   |   -62    |    24    |  Nothing   |  Nothing   |
+|   O2   |   235    |    24    |  Nothing   |  Nothing   |
+|   P8   |   -63    |    24    |  Nothing   |  Nothing   |
+|   T8   |   626    |    16    |  Nothing   |  Nothing   |
+|   F8   |   1045   |    16    |  Nothing   |  Nothing   |
+|   AF4  |   578    |    8     |  Nothing   |  Nothing   |
+|   FC6  |   973    |    16    |  Nothing   |  Nothing   |
+|   F4   |   780    |    8     |  Nothing   |  Nothing   |
+|   X    |    2     |   N/A    |    N/A     |    N/A     |
+|   Y    |    1     |   N/A    |    N/A     |    N/A     |
+|   Z    |    ?     |   N/A    |    N/A     |    N/A     |
+|  Batt  |    46    |   N/A    |    N/A     |    N/A     |
++--------+----------+----------+------------+------------+
+|Packets Received:   452    |  Packets Processed:   447  |
+|   Sampling Rate:    2     |        Crypto Rate:    0   |
++========================================================+
